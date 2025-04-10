@@ -1,0 +1,1 @@
+from myapp.todo_app.views import task_list

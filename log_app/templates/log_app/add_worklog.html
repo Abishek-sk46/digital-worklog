@@ -1,0 +1,43 @@
+{% extends 'log_app/base.html' %}
+
+{% block content %}
+  <div class="max-w-3xl mx-auto px-4 py-8">
+    <h1 class="text-4xl font-bold text-center text-gray-800 mb-8"> {{ title|default:"Add Work Log" }}</h1>
+
+    <div class="bg-white p-6 rounded-lg shadow-lg">
+      <form method="post">
+        {% csrf_token %}
+        <p>{{ users }}</p>
+        <div class="space-y-4">
+          <div>
+            <label for="id_user" class="block text-lg font-semibold text-gray-700">User</label>
+            <select name="user" id="id_user" class="w-full px-4 py-2 border rounded-lg">
+              {% for user in users %}
+                <option value="{{ user.id }}" {% if form.user.value == user.id %} selected {% endif %}>{{ user.username }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div>
+            <label for="id_task_list" class="block text-lg font-semibold text-gray-700">Task List</label>
+            <input type="text" name="task_list" id="id_task_list" class="w-full px-4 py-2 border rounded-lg" value="{{ form.task_list.value }}">
+          </div>
+
+          <div>
+            <label for="id_description" class="block text-lg font-semibold text-gray-700">Description</label>
+            <textarea name="description" id="id_description" rows="4" class="w-full px-4 py-2 border rounded-lg">{{ form.description.value }}</textarea>
+          </div>
+
+          <div>
+            <label for="id_hours_spent" class="block text-lg font-semibold text-gray-700">Hours Spent</label>
+            <input type="number" name="hours_spent" id="id_hours_spent" class="w-full px-4 py-2 border rounded-lg" value="{{ form.hours_spent.value }}">
+          </div>
+
+          <div class="text-center">
+            <button type="submit" class="mt-4 w-full bg-blue-500 text-white py-2 px-4 rounded-lg hover:bg-blue-600">Add Work Log</button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+{% endblock %}
