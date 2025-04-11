@@ -2,24 +2,30 @@
 
 {% block content %}
 
-<h1 class="text-3xl font-bold text-center mb-6">All Work Logs</h1>
+<div class="min-h-screen bg-gray-100 py-10">
+  <div class="max-w-4xl mx-auto px-4">
+    <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">📝 All Work Logs</h1>
 
 {% for worklog in worklogs %}
-  <div class="bg-white p-6 rounded-lg shadow-lg mb-4">
-    <h3 class="text-2xl font-semibold text-gray-800">{{ worklog.task_list }}</h3>
-    <p class="mt-2 text-gray-600">{{ worklog.description }}</p>
-    <p class="mt-2 text-gray-500">Logged by: {{ worklog.user.username }}</p>
-    <p class="mt-2 text-gray-500">Hours Spent: {{ worklog.hours_spent }}</p>
-    <p class="mt-2 text-gray-500">Date Logged: {{ worklog.date_logged }}</p>
-    
-    <div class="mt-4 flex justify-between">
-      <a href="{% url 'edit_worklog' worklog.id %}" class="text-indigo-600 hover:underline font-medium">Edit</a>
-      <a href="{% url 'delete_worklog' worklog.id %}" class="text-red-600 hover:underline font-medium"
-         onclick="return confirm('Are you sure you want to delete this work log?');">Delete</a>
+<div class="bg-white p-6 rounded-xl shadow-md mb-6 hover:shadow-lg transition duration-300">
+  <div class="flex justify-between items-center">
+    <h2 class="text-xl font-bold text-blue-700">{{ worklog.task_list }}</h2>
+    <div class="space-x-4">
+      <a href="{% url 'edit_worklog' worklog.id %}" class="text-sm text-indigo-600 hover:underline font-medium">Edit</a>
+      <a href="{% url 'delete_worklog' worklog.id %}" class="text-sm text-red-600 hover:underline font-medium">Delete</a>
     </div>
   </div>
+  <p class="text-gray-600 mt-2 italic">{{ worklog.description }}</p>
+  <div class="mt-4 text-sm text-gray-500 space-y-1">
+    <p>👤 Logged by: <span class="font-medium text-gray-700">{{ worklog.user.username }}</span></p>
+    <p>⏱ Hours Spent: <span class="font-medium text-gray-700">{{ worklog.hours_spent }}</span></p>
+    <p>📅 Date Logged: <span class="font-medium text-gray-700">{{ worklog.date_logged|date:"F j, Y, g:i a" }}</span></p>
+  </div>
+</div>
 {% empty %}
   <p class="text-center text-gray-500">No work logs available yet.</p>
 {% endfor %}
+</div>
+</div>
 
 {% endblock %}

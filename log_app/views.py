@@ -55,7 +55,7 @@ def edit_worklog(request, pk):
     else:
         form = WorkLogForm(instance=worklog)
 
-    return render(request, 'log_app/edit_worklog.html', {
+    return render(request, 'log_app/add_worklog.html', {
         'form': form,
         'title': 'Edit Work Log'
     })
@@ -85,3 +85,16 @@ def register(request):
         form = UserRegistrationForm()
     
     return render(request, 'registration/register.html', {'form': form})
+
+@login_required
+def dashboard(request):
+    user_logs = WorkLog.objects.filter(user=request.user).order_by('-date_logged')
+    total_logs = user_logs.count()
+    total_hours = sum(log.hours_spent for log in user_logs)
+    recent_logs = user_logs[:5]
+
+    return render(request, 'log_app/dashboard.html', {
+        'total_logs': total_logs,
+        'total_hours': total_hours,
+        'recent_logs': recent_logs
+    })

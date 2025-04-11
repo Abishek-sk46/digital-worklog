@@ -1,0 +1,33 @@
+{% extends 'log_app/base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto py-10 px-4">
+  <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">📊 Your Dashboard</h1>
+
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
+    <div class="bg-blue-500 rounded-lg p-6 shadow-lg">
+      <h2 class="text-xl font-semibold">Total Logs</h2>
+      <p class="text-4xl mt-2">{{ total_logs }}</p>
+    </div>
+
+    <div class="bg-green-500 rounded-lg p-6 shadow-lg">
+      <h2 class="text-xl font-semibold">Total Hours Spent</h2>
+      <p class="text-4xl mt-2">{{ total_hours }}</p>
+    </div>
+  </div>
+
+  <div class="mt-10">
+    <h2 class="text-2xl font-bold text-gray-700 mb-4">🕒 Recent Logs</h2>
+    <ul class="space-y-4">
+      {% for log in recent_logs %}
+      <li class="bg-white p-4 rounded-lg shadow">
+        <h3 class="text-lg font-semibold text-blue-700">{{ log.task_list }}</h3>
+        <p class="text-sm text-gray-500">{{ log.description }}</p>
+        <p class="text-sm text-gray-400">⏱ {{ log.hours_spent }} hrs | 🗓 {{ log.date_logged|date:"M d, Y H:i" }}</p>
+      </li>
+      {% empty %}
+      <li class="text-gray-500">No logs yet.</li>
+      {% endfor %}
+    </ul>
+  </div>
+</div>
+{% endblock %}
