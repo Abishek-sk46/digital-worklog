@@ -1,26 +1,42 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Digital Work Log</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Digital Work Log</title>
+  <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-100">
-    <header class="bg-blue-600 text-white p-4">
-        <div class="max-w-7xl mx-auto flex justify-between items-center">
-            <a href="/" class="text-2xl font-bold">Digital Work Log</a>
-            <nav>
-                <a href="/" class="px-4">Home</a>
-                <a href="{% url 'worklog_list' %}" class="px-4">Work Logs</a>
-                <a href="{% url 'add_worklog' %}" class="px-4">Add Work Log</a>
-            </nav>
-        </div>
-    </header>
 
-    <main>
-        {% block content %}
-        {% endblock %}
-    </main>
+  <!-- Navbar -->
+  <header class="bg-blue-600 text-white shadow sticky top-0 z-50">
+    <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
+      <a href="{% url 'home' %}" class="text-2xl font-bold tracking-wide hover:underline">
+        📝 Digital Work Log
+      </a>
+
+      <nav class="space-x-4 text-sm md:text-base">
+        <a href="{% url 'home' %}" class="hover:underline">Home</a>
+
+        {% if user.is_authenticated %}
+          <a href="{% url 'worklog_list' %}" class="hover:underline">My Logs</a>
+          <a href="{% url 'add_worklog' %}" class="hover:underline">Add Log</a>
+          <span class="hidden md:inline">|</span>
+          <span class="text-white">Hi, {{ user.username }}</span>
+          <a href="{% url 'logout' %}" class="hover:underline text-red-100">Logout</a>
+        {% else %}
+          <a href="{% url 'login' %}" class="hover:underline">Login</a>
+          <a href="{% url 'register' %}" class="hover:underline">Sign Up</a>
+        {% endif %}
+      </nav>
+    </div>
+  </header>
+
+  <!-- Main content -->
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    {% block content %}
+    {% endblock %}
+  </main>
+
 </body>
 </html>

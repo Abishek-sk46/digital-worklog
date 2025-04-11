@@ -1,0 +1,9 @@
+{% extends 'log_app/base.html' %}
+{% block content %}
+<section class="min-h-screen flex items-center justify-center bg-gray-100">
+  <div class="bg-white p-6 rounded-lg shadow text-center">
+    <h2 class="text-2xl font-bold text-gray-800">You’ve been logged out</h2>
+    <a href="{% url 'login' %}" class="mt-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">Log in again</a>
+  </div>
+</section>
+{% endblock %}

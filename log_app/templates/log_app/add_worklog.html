@@ -9,14 +9,14 @@
         {% csrf_token %}
         <p>{{ users }}</p>
         <div class="space-y-4">
-          <div>
+          {% comment %} <div>
             <label for="id_user" class="block text-lg font-semibold text-gray-700">User</label>
             <select name="user" id="id_user" class="w-full px-4 py-2 border rounded-lg">
               {% for user in users %}
                 <option value="{{ user.id }}" {% if form.user.value == user.id %} selected {% endif %}>{{ user.username }}</option>
               {% endfor %}
             </select>
-          </div>
+          </div> {% endcomment %}
           
           <div>
             <label for="id_task_list" class="block text-lg font-semibold text-gray-700">Task List</label>
