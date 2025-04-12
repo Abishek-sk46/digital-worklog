@@ -3,18 +3,68 @@
 <div class="max-w-4xl mx-auto py-10 px-4">
   <h1 class="text-3xl font-bold text-center text-blue-700 mb-6">📊 Your Dashboard</h1>
 
+  <!-- Stats Cards -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6 text-white">
     <div class="bg-blue-500 rounded-lg p-6 shadow-lg">
       <h2 class="text-xl font-semibold">Total Logs</h2>
       <p class="text-4xl mt-2">{{ total_logs }}</p>
     </div>
-
     <div class="bg-green-500 rounded-lg p-6 shadow-lg">
       <h2 class="text-xl font-semibold">Total Hours Spent</h2>
       <p class="text-4xl mt-2">{{ total_hours }}</p>
     </div>
   </div>
 
+  <!-- Filter Dropdown -->
+  <form method="get" class="mb-6 text-right mt-8">
+    <label for="range" class="text-gray-700 font-medium mr-2">Filter by:</label>
+    <select name="range" id="range" class="p-2 border rounded shadow-sm focus:ring-blue-500 focus:border-blue-500" onchange="this.form.submit()">
+      <option value="today" {% if selected_range == 'today' %}selected{% endif %}>Today</option>
+      <option value="week" {% if selected_range == 'week' %}selected{% endif %}>Last 7 Days</option>
+      <option value="month" {% if selected_range == 'month' %}selected{% endif %}>Last 30 Days</option>
+      <option value="year" {% if selected_range == 'year' %}selected{% endif %}>Last 1 Year</option>
+    </select>
+  </form>
+
+  <!-- Chart Section -->
+  <div class="mt-10">
+    <h2 class="text-2xl font-bold text-gray-800 mb-4">📊 Work Hours ({{ selected_range|capfirst }})</h2>
+    
+    {% if empty_today %}
+      <!-- Special empty state for today -->
+      <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 text-center">
+        <svg class="mx-auto h-12 w-12 text-blue-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        <h3 class="mt-2 text-lg font-medium text-blue-800">No time logged today</h3>
+        <p class="mt-1 text-blue-600">Get started by adding your first work log</p>
+        <div class="mt-4">
+          <a href="{% url 'add_worklog' %}" class="inline-flex items-center px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+            <svg class="-ml-1 mr-2 h-5 w-5" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M10 5a1 1 0 011 1v3h3a1 1 0 110 2h-3v3a1 1 0 11-2 0v-3H6a1 1 0 110-2h3V6a1 1 0 011-1z" clip-rule="evenodd"/>
+            </svg>
+            Add Log
+          </a>
+        </div>
+      </div>
+    {% else %}
+      <!-- Normal chart container -->
+      <div class="bg-white p-4 rounded-lg shadow-lg">
+        <div class="relative h-80 w-full md:h-96">
+          <canvas id="workChart"></canvas>
+          <!-- Loading overlay remains same -->
+        </div>
+      </div>
+    {% endif %}
+  </div>
+      <!-- Empty State -->
+      <div id="chartEmpty" class="hidden absolute inset-0 flex items-center justify-center text-gray-500">
+        No data available for this period
+      </div>
+    </div>
+  </div>
+
+  <!-- Recent Logs -->
   <div class="mt-10">
     <h2 class="text-2xl font-bold text-gray-700 mb-4">🕒 Recent Logs</h2>
     <ul class="space-y-4">
@@ -30,4 +80,87 @@
     </ul>
   </div>
 </div>
+
+
+
+<!-- TEMPORARY DEBUG - REMOVE LATER -->
+<div class="p-4 mb-4 bg-yellow-100 rounded-lg">
+  <h3 class="font-bold">Debug Info</h3>
+  <p><strong>Selected Range:</strong> {{ selected_range }}</p>
+  <p><strong>First 3 Labels:</strong> 
+    {% for label in chart_labels|slice:":3" %}
+      "{{ label }}"{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+  <p><strong>First 3 Data Points:</strong> 
+    {% for data in chart_data|slice:":3" %}
+      {{ data }}{% if not forloop.last %}, {% endif %}
+    {% endfor %}
+  </p>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+  // Show loading state when changing filters
+  document.getElementById('range').addEventListener('change', function() {
+    document.getElementById('chartLoading').classList.remove('hidden');
+  });
+
+  // Initialize chart only if data exists
+  const chartData = {{ chart_data|safe }};
+  const ctx = document.getElementById('workChart').getContext('2d');
+  
+  if (chartData.length > 0) {
+    const workChart = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: {{ chart_labels|safe }},
+        datasets: [{
+          label: 'Hours Worked',
+          data: chartData,
+          backgroundColor: 'rgba(79, 70, 229, 0.7)',
+          borderColor: 'rgba(79, 70, 229, 1)',
+          borderWidth: 1,
+          borderRadius: 6,
+        }]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { display: false },
+          title: {
+            display: true,
+            text: 'Daily Work Hours',
+            font: { size: 16, weight: 'bold' },
+            padding: { top: 10, bottom: 20 }
+          },
+          tooltip: {
+            callbacks: { label: (context) => `${context.parsed.y} hrs` }
+          }
+        },
+        scales: {
+          y: {
+            beginAtZero: true,
+            title: { 
+              display: true, 
+              text: 'Hours',
+              font: { weight: 'bold' }
+            },
+            ticks: { stepSize: 1 },
+            grid: { color: 'rgba(0, 0, 0, 0.05)' }
+          },
+          x: {
+            grid: { display: false }
+          }
+        }
+      }
+    });
+    document.getElementById('chartLoading').classList.add('hidden');
+  } else {
+    document.getElementById('chartLoading').classList.add('hidden');
+    document.getElementById('chartEmpty').classList.remove('hidden');
+    document.getElementById('workChart').style.display = 'none';
+  }
+</script>
 {% endblock %}
