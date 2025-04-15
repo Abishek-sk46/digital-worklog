@@ -99,11 +99,12 @@ from django.db.models.functions import TruncDate
 from django.db.models import Sum
 from django.db.models import F, Func, ExpressionWrapper, DateTimeField
 from django.utils.timezone import localtime
-
+from django.utils import timezone
+from datetime import timedelta
 
 @login_required
 def dashboard(request):
-    # 🔥 FIRST FIX: Filter by current user (or all for superuser)
+    # 1. Filter logs by user
     if request.user.is_superuser:
         user_logs = WorkLog.objects.all()
     else:
@@ -114,72 +115,45 @@ def dashboard(request):
     total_hours = sum(log.hours_spent for log in user_logs)
     recent_logs = user_logs[:5]
 
+    # 2. Handle date range selection
     date_range = request.GET.get('range', 'week')
+    today = timezone.localtime(timezone.now()).date()
 
     # Calculate date ranges
-    today = timezone.localtime(timezone.now()).date()
     if date_range == 'today':
         start_date = today
+        end_date = today + timedelta(days=1)
         date_list = [today]
     elif date_range == 'month':
         start_date = today - timedelta(days=30)
+        end_date = today + timedelta(days=1)
         date_list = [start_date + timedelta(days=x) for x in range(31)]
     elif date_range == 'year':
         start_date = today - timedelta(days=365)
+        end_date = today + timedelta(days=1)
         date_list = [today - timedelta(days=x) for x in range(0, 366, 30)]
     else:  # week
         start_date = today - timedelta(days=6)
+        end_date = today + timedelta(days=1)
         date_list = [start_date + timedelta(days=x) for x in range(7)]
 
-    # 🔥 SECOND FIX: Proper timezone-aware filtering
-    daily_data = (
-    user_logs
-    .filter(date_logged__date__gte=start_date)
-    .annotate(
-        day=TruncDate('date_logged', tzinfo=get_current_timezone())  # ← KEY FIX
-    )
-    .values('day')
-    .annotate(total_hours=Sum('hours_spent'))
-    .order_by('day')
-)
+    # 3. Create timezone-aware datetime range (FIXED)
+    from datetime import datetime, time
+    start_datetime = timezone.make_aware(datetime.combine(start_date, time.min))
+    end_datetime = timezone.make_aware(datetime.combine(end_date, time.min))
 
-    hours_by_day = {log['day'].date(): log['total_hours'] for log in daily_data}
+    # 4. Manual aggregation with timezone conversion
+    hours_by_day = {}
+    for log in user_logs.filter(date_logged__gte=start_datetime, date_logged__lt=end_datetime):
+        log_date = timezone.localtime(log.date_logged).date()
+        hours_by_day[log_date] = hours_by_day.get(log_date, 0) + log.hours_spent
 
+    # 5. Prepare chart data
     labels = []
     data = []
     for day in date_list:
         labels.append(day.strftime('%a %b %d' if date_range == 'week' else '%b %d'))
         data.append(float(hours_by_day.get(day, 0)))
-
-
-
-    # for testing
-    print("=== CHART DEBUG START ===")
-
-    print(f"Selected Range: {date_range}")
-    print(f"Start Date: {start_date}")
-
-    print("All Logs (user_logs):")
-    for log in user_logs:
-        print(f"📝 {log.task_list} | {log.date_logged} | {log.hours_spent}")
-
-    print("\nFiltered Logs for Chart (daily_data):")
-    for log in daily_data:
-        print(f"📊 {log['day']} | {log['total_hours']} hrs")
-
-    print(f"\nLabels: {labels}")
-    print(f"Data: {data}")
-    print("=== CHART DEBUG END ===")
-
-    # 🔥 THIRD FIX: Proper empty state check
-    if date_range == 'today' and not hours_by_day.get(today, 0):
-        return render(request, 'log_app/dashboard.html', {
-            'empty_today': True,
-            'total_logs': total_logs,
-            'total_hours': total_hours,
-            'recent_logs': recent_logs,
-            'selected_range': date_range,
-        })
 
     return render(request, 'log_app/dashboard.html', {
         'total_logs': total_logs,
