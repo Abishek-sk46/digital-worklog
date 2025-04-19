@@ -65,39 +65,36 @@
   </div>
 
   <!-- Recent Logs -->
-  <div class="mt-10">
-    <h2 class="text-2xl font-bold text-gray-700 mb-4">🕒 Recent Logs</h2>
-    <ul class="space-y-4">
-      {% for log in recent_logs %}
-      <li class="bg-white p-4 rounded-lg shadow">
-        <h3 class="text-lg font-semibold text-blue-700">{{ log.task_list }}</h3>
-        <p class="text-sm text-gray-500">{{ log.description }}</p>
-        <p class="text-sm text-gray-400">⏱ {{ log.hours_spent }} hrs | 🗓 {{ log.date_logged|date:"M d, Y H:i" }}</p>
-      </li>
-      {% empty %}
-      <li class="text-gray-500">No logs yet.</li>
-      {% endfor %}
-    </ul>
-  </div>
+<!-- Recent Logs -->
+<div class="mt-10">
+  <h2 class="text-2xl font-bold text-gray-700 mb-4">🕒 Recent Logs</h2>
+  <ul class="space-y-4">
+    {% for log in recent_logs %}
+    <li class="bg-white p-4 rounded-lg shadow">
+      <h3 class="text-lg font-semibold text-blue-700">{{ log.task_list }}</h3>
+      <p class="text-sm text-gray-500">{{ log.description }}</p>
+      <p class="text-sm text-gray-400">⏱ {{ log.hours_spent }} hrs | 🗓 {{ log.date_logged|date:"M d, Y H:i" }}</p>
+      
+      {% if user.is_superuser %}
+        <p class="text-sm text-purple-600 font-medium mt-1">
+          👤 User: <span class="font-semibold">{{ log.user.username }}</span>
+          {% if log.user.profile.role %}
+            | Role: <span class="italic">{{ log.user.profile.role }}</span>
+          {% endif %}
+        </p>
+      {% endif %}
+    </li>
+    {% empty %}
+    <li class="text-gray-500">No logs yet.</li>
+    {% endfor %}
+  </ul>
 </div>
 
 
 
-<!-- TEMPORARY DEBUG - REMOVE LATER -->
-<div class="p-4 mb-4 bg-yellow-100 rounded-lg">
-  <h3 class="font-bold">Debug Info</h3>
-  <p><strong>Selected Range:</strong> {{ selected_range }}</p>
-  <p><strong>First 3 Labels:</strong> 
-    {% for label in chart_labels|slice:":3" %}
-      "{{ label }}"{% if not forloop.last %}, {% endif %}
-    {% endfor %}
-  </p>
-  <p><strong>First 3 Data Points:</strong> 
-    {% for data in chart_data|slice:":3" %}
-      {{ data }}{% if not forloop.last %}, {% endif %}
-    {% endfor %}
-  </p>
-</div>
+
+
+
 
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>

@@ -1,17 +1,11 @@
 from django.contrib.auth.models import User
-from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from .forms import WorkLogForm
 from .models import WorkLog
 from django.contrib.auth.decorators import login_required
-from django.http import JsonResponse
-from django.db.models import Sum
-from django.db.models.functions import TruncDate
-from datetime import date, time, timedelta
+from datetime import timedelta
 from django.utils import timezone
-from datetime import datetime, timedelta
-from django.db.models.functions import TruncDate
-from django.utils.timezone import get_current_timezone
+
 
 
 
@@ -95,12 +89,6 @@ def register(request):
     return render(request, 'registration/register.html', {'form': form})
 
 
-from django.db.models.functions import TruncDate
-from django.db.models import Sum
-from django.db.models import F, Func, ExpressionWrapper, DateTimeField
-from django.utils.timezone import localtime
-from django.utils import timezone
-from datetime import timedelta
 
 @login_required
 def dashboard(request):
@@ -163,3 +151,20 @@ def dashboard(request):
         'chart_data': data,
         'selected_range': date_range,
     })
+
+from .forms import ProfileForm
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def edit_profile(request):
+    profile = request.user.profile
+
+    if request.method == 'POST':
+        form = ProfileForm(request.POST, instance=profile)
+        if form.is_valid():
+            form.save()
+            return redirect('dashboard')  # Or wherever you want to redirect
+    else:
+        form = ProfileForm(instance=profile)
+
+    return render(request, 'log_app/edit_profile.html', {'form': form})
