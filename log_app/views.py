@@ -168,3 +168,59 @@ def edit_profile(request):
         form = ProfileForm(instance=profile)
 
     return render(request, 'log_app/edit_profile.html', {'form': form})
+
+from django.contrib.auth.forms import PasswordResetForm
+from django.shortcuts import render, redirect
+from django.contrib import messages
+
+def custom_password_reset(request):
+    if request.method == 'POST':
+        form = PasswordResetForm(request.POST)
+        if form.is_valid():
+            # You can customize email sending here
+            form.save(request=request)  # Uses Django's default email sending mechanism
+            messages.success(request, "Password reset email sent!")
+            return redirect('password_reset_done')
+    else:
+        form = PasswordResetForm()
+    
+    return render(request, 'registration/password_reset_form.html', {'form': form})
+
+# views.py
+from django.shortcuts import render
+
+def password_reset_done(request):
+    return render(request, 'registration/password_reset_done.html')
+
+# views.py
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.models import User
+from django.shortcuts import render, get_object_or_404
+from django.utils.http import urlsafe_base64_decode
+
+def password_reset_confirm(request, uidb64, token):
+    try:
+        uid = urlsafe_base64_decode(uidb64).decode()
+        user = get_object_or_404(User, pk=uid)
+    except (TypeError, ValueError, OverflowError, User.DoesNotExist):
+        user = None
+
+    if user is not None and default_token_generator.check_token(user, token):
+        if request.method == 'POST':
+            form = SetPasswordForm(user, request.POST)
+            if form.is_valid():
+                form.save()
+                return redirect('password_reset_complete')
+        else:
+            form = SetPasswordForm(user)
+    else:
+        return render(request, 'registration/password_reset_invalid.html')  # Invalid link
+
+    return render(request, 'registration/password_reset_confirm.html', {'form': form})
+
+# views.py
+from django.shortcuts import render
+
+def password_reset_complete(request):
+    return render(request, 'registration/password_reset_complete.html')

@@ -29,6 +29,12 @@
       Don’t have an account?
       <a href="{% url 'register' %}" class="text-blue-600 font-medium hover:underline">Sign up</a>
     </p>
+
+    <!-- Forgot Password Link -->
+    <p class="text-center text-sm text-gray-600 mt-4">
+      <a href="{% url 'password_reset' %}" class="text-blue-600 font-medium hover:underline">Forgot your password?</a>
+    </p>
   </div>
 </section>
 {% endblock %}
+
