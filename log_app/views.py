@@ -63,7 +63,7 @@ def worklog_list(request):
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)
     
-    return render(request, 'log_app/worklog_list.html', {'page_obj': page_obj,'logs':logs})
+    return render(request, 'log_app/worklog_list.html', {'page_obj': page_obj,'logs':page_obj.object_list,'search_query': request.GET.get('q', '')})
 
 @login_required
 def add_worklog(request):
