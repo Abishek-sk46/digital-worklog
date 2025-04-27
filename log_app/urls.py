@@ -15,5 +15,6 @@ urlpatterns = [
     path('password-reset/done/', views.password_reset_done, name='password_reset_done'),
     path('reset/<uidb64>/<token>/', views.password_reset_confirm, name='password_reset_confirm'),
     path('reset/done/', views.password_reset_complete, name='password_reset_complete'),
-    
+    path('export/', views.export_csv, name='export_csv'),
+    path('export-pdf/', views.export_pdf, name='export_pdf'),
 ]

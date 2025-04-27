@@ -8,7 +8,15 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-gray-100">
-
+ <!-- ADD THIS MESSAGES SECTION -->
+ <div id="message-container" class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
+  {% for message in messages %}
+  <div class="message bg-green-100 border-l-4 border-green-500 text-green-700 p-4 mb-2 rounded-lg shadow-lg flex justify-between">
+    <span>{{ message }}</span>
+    <button onclick="this.parentElement.remove()" class="text-green-700 hover:text-green-900">✕</button>
+  </div>
+  {% endfor %}
+</div>
   <!-- Navbar -->
   <header class="bg-blue-600 text-white shadow sticky top-0 z-50">
     <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
@@ -41,4 +49,15 @@
   </main>
 
 </body>
+
+<script>
+  // Auto-dismiss after 3 seconds
+  document.querySelectorAll('.message').forEach(message => {
+    setTimeout(() => {
+      message.style.transition = 'opacity 0.5s';
+      message.style.opacity = '0';
+      setTimeout(() => message.remove(), 500);
+    }, 3000);
+  });
+</script>
 </html>

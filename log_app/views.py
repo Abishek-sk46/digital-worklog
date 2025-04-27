@@ -5,6 +5,40 @@ from .models import WorkLog
 from django.contrib.auth.decorators import login_required
 from datetime import timedelta
 from django.utils import timezone
+from django.contrib import messages 
+from django.core.paginator import Paginator
+from django.contrib.auth import login
+from .forms import UserRegistrationForm
+from django.shortcuts import get_object_or_404
+from .forms import ProfileForm
+
+from django.contrib.auth.decorators import login_required
+from django.contrib.auth.forms import PasswordResetForm
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.forms import SetPasswordForm
+from django.contrib.auth.models import User
+from django.shortcuts import render, get_object_or_404
+from django.utils.http import urlsafe_base64_decode
+
+import csv
+from django.http import HttpResponse
+from django.utils import timezone
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
+from reportlab.lib.units import inch
+from reportlab.lib import colors
+from django.http import HttpResponse
+from reportlab.lib.pagesizes import letter
+from reportlab.lib import colors
+from reportlab.platypus import Table, TableStyle
+import io
+
+
+
+
+
 
 
 
@@ -14,13 +48,18 @@ def home(request):
 
 
 @login_required
+
 def worklog_list(request):
     if request.user.is_superuser:
-        worklogs = WorkLog.objects.all()
+        logs = WorkLog.objects.all().order_by('-date_logged')
     else:
-        worklogs = WorkLog.objects.filter(user=request.user)
-    return render(request, 'log_app/worklog_list.html', {'worklogs': worklogs})
-
+        logs = WorkLog.objects.filter(user=request.user).order_by('-date_logged')
+    
+    paginator = Paginator(logs, 10)  # Show 10 logs per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    return render(request, 'log_app/worklog_list.html', {'page_obj': page_obj,'logs':logs})
 
 @login_required
 def add_worklog(request):
@@ -30,6 +69,7 @@ def add_worklog(request):
             worklog = form.save(commit=False)
             worklog.user = request.user  # 🔥 Auto-assign user
             worklog.save()
+            messages.success(request, "Worklog added successfully!")  # Add this line
             return redirect('worklog_list')
     else:
         form = WorkLogForm()
@@ -39,7 +79,6 @@ def add_worklog(request):
         'title': 'Add Work Log'
     })
 
-from django.shortcuts import get_object_or_404
 
 @login_required
 def edit_worklog(request, pk):
@@ -53,6 +92,7 @@ def edit_worklog(request, pk):
         form = WorkLogForm(request.POST, instance=worklog)
         if form.is_valid():
             form.save()
+            messages.success(request, "Worklog updated successfully!") 
             return redirect('worklog_list')
     else:
         form = WorkLogForm(instance=worklog)
@@ -73,8 +113,6 @@ def delete_worklog(request, pk):
     return redirect('worklog_list')
 
 
-from django.contrib.auth import login
-from .forms import UserRegistrationForm
 
 def register(request):
     if request.method == 'POST':
@@ -152,8 +190,6 @@ def dashboard(request):
         'selected_range': date_range,
     })
 
-from .forms import ProfileForm
-from django.contrib.auth.decorators import login_required
 
 @login_required
 def edit_profile(request):
@@ -169,9 +205,6 @@ def edit_profile(request):
 
     return render(request, 'log_app/edit_profile.html', {'form': form})
 
-from django.contrib.auth.forms import PasswordResetForm
-from django.shortcuts import render, redirect
-from django.contrib import messages
 
 def custom_password_reset(request):
     if request.method == 'POST':
@@ -193,11 +226,6 @@ def password_reset_done(request):
     return render(request, 'registration/password_reset_done.html')
 
 # views.py
-from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.models import User
-from django.shortcuts import render, get_object_or_404
-from django.utils.http import urlsafe_base64_decode
 
 def password_reset_confirm(request, uidb64, token):
     try:
@@ -224,3 +252,79 @@ from django.shortcuts import render
 
 def password_reset_complete(request):
     return render(request, 'registration/password_reset_complete.html')
+
+
+def export_csv(request):
+    # Create the HttpResponse object with CSV header
+    response = HttpResponse(content_type='text/csv')
+    response['Content-Disposition'] = f'attachment; filename="worklogs_{timezone.now().date()}.csv"'
+    
+    # Create CSV writer
+    writer = csv.writer(response)
+    
+    # Write headers
+    writer.writerow(['Task Name', 'Description', 'Hours Spent', 'Date Logged'])
+    
+    # Get logs for current user
+    logs = WorkLog.objects.filter(user=request.user).order_by('-date_logged')
+    
+    # Write data rows
+    for log in logs:
+        writer.writerow([
+            log.task_list,
+            log.description,
+            log.hours_spent,
+            timezone.localtime(log.date_logged).strftime('%Y-%m-%d %H:%M')
+        ])
+    
+    return response
+
+
+
+
+# In views.py
+
+def export_pdf(request):
+    buffer = io.BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=72, leftMargin=72, topMargin=72, bottomMargin=72)
+    
+    styles = getSampleStyleSheet()
+    styles.add(ParagraphStyle(name='RightAlign', alignment=2))  # 2 = TA_RIGHT
+    
+    # Content
+    elements = []
+    
+    # Header
+    elements.append(Paragraph(f"Work Logs for <b>{request.user.username}</b>", styles['Title']))
+    elements.append(Paragraph(f"Generated on {timezone.now().date()}", styles['RightAlign']))
+    elements.append(Spacer(1, 0.25 * inch))
+    
+    # Table Data
+    data = [['Task', 'Hours', 'Date']]
+    logs = WorkLog.objects.filter(user=request.user).order_by('-date_logged')
+    
+    for log in logs:
+        data.append([
+            log.task_list,
+            f"{log.hours_spent:.2f}",
+            timezone.localtime(log.date_logged).strftime('%b %d, %Y')
+        ])
+    
+    # Create Table
+    table = Table(data)
+    table.setStyle(TableStyle([
+        ('BACKGROUND', (0,0), (-1,0), colors.HexColor('#3b82f6')),  # Header blue
+        ('TEXTCOLOR', (0,0), (-1,0), colors.white),
+        ('ALIGN', (0,0), (-1,-1), 'CENTER'),
+        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0,0), (-1,0), 12),
+        ('BOTTOMPADDING', (0,0), (-1,0), 12),
+        ('BACKGROUND', (0,1), (-1,-1), colors.beige),
+        ('GRID', (0,0), (-1,-1), 1, colors.lightgrey),
+    ]))
+    
+    elements.append(table)
+    doc.build(elements)
+    
+    buffer.seek(0)
+    return HttpResponse(buffer, content_type='application/pdf')

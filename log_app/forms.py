@@ -2,9 +2,19 @@ from django import forms
 from .models import WorkLog
 
 class WorkLogForm(forms.ModelForm):
+    hours_spent = forms.FloatField(
+        widget=forms.NumberInput(attrs={
+            'step': '0.25',  # Allows .25, .50, .75, etc.
+            'min': '0.1',     # Minimum 0.1 hours
+            'class': 'w-full px-4 py-2 border rounded-lg focus:ring-2 focus:ring-blue-400'
+        })
+    )
+
+
     class Meta:
         model = WorkLog
         fields = ['task_list', 'description', 'hours_spent']
+
 
 
 
@@ -16,6 +26,7 @@ class UserRegistrationForm(UserCreationForm):
     class Meta:
         model = User
         fields = ['username', 'email', 'password1', 'password2']
+
 
 from django import forms
 from .models import Profile
