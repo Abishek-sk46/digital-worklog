@@ -1,42 +1,37 @@
+# Django imports for authentication and user management
 from django.contrib.auth.models import User
-from django.shortcuts import redirect, render
-from .forms import WorkLogForm
-from .models import WorkLog
 from django.contrib.auth.decorators import login_required
-from datetime import timedelta
-from django.utils import timezone
-from django.contrib import messages 
-from django.core.paginator import Paginator
 from django.contrib.auth import login
-from .forms import UserRegistrationForm
-from django.shortcuts import get_object_or_404
-from .forms import ProfileForm
-
-from django.contrib.auth.decorators import login_required
-from django.contrib.auth.forms import PasswordResetForm
-from django.shortcuts import render, redirect
-from django.contrib import messages
+from django.contrib.auth.forms import PasswordResetForm, SetPasswordForm
 from django.contrib.auth.tokens import default_token_generator
-from django.contrib.auth.forms import SetPasswordForm
-from django.contrib.auth.models import User
-from django.shortcuts import render, get_object_or_404
-from django.utils.http import urlsafe_base64_decode
 
-import csv
+# Django imports for HTTP handling and shortcuts
+from django.shortcuts import redirect, render, get_object_or_404
 from django.http import HttpResponse
+
+# Django imports for forms and models
+from .forms import WorkLogForm, UserRegistrationForm, ProfileForm
+from .models import WorkLog
+
+# Django imports for utilities
 from django.utils import timezone
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table
-from reportlab.lib.units import inch
-from reportlab.lib import colors
-from django.http import HttpResponse
-from reportlab.lib.pagesizes import letter
-from reportlab.lib import colors
-from reportlab.platypus import Table, TableStyle
+from django.utils.http import urlsafe_base64_decode
+from django.core.paginator import Paginator
+from django.contrib import messages
+
+# Python standard library imports
+from datetime import timedelta
+import csv
 import io
 
+# ReportLab imports for PDF generation
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.lib.units import inch
+from reportlab.lib import colors
 
-
+# search functinality
+from django.db.models import Q
 
 
 
@@ -50,11 +45,20 @@ def home(request):
 @login_required
 
 def worklog_list(request):
-    if request.user.is_superuser:
-        logs = WorkLog.objects.all().order_by('-date_logged')
-    else:
-        logs = WorkLog.objects.filter(user=request.user).order_by('-date_logged')
+    search_query = request.GET.get('q', '')
     
+    if request.user.is_superuser:
+        logs = WorkLog.objects.all()
+    else:
+        logs = WorkLog.objects.filter(user=request.user)
+    
+    if search_query:
+        logs = logs.filter(
+            Q(task_list__icontains=search_query) |
+            Q(description__icontains=search_query)
+        )
+    
+    logs = logs.order_by('-date_logged')
     paginator = Paginator(logs, 10)  # Show 10 logs per page
     page_number = request.GET.get('page')
     page_obj = paginator.get_page(page_number)

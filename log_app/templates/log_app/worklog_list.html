@@ -28,6 +28,26 @@
   <div class="max-w-4xl mx-auto px-4">
     <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">📝 All Work Logs</h1>
 
+    {% comment %} search functionality {% endcomment %}
+    <div class="mb-6">
+      <form method="get" class="flex">
+        <input type="text" 
+               name="q" 
+               value="{{ search_query|default:'' }}"
+               placeholder="Search tasks or descriptions..."
+               class="flex-grow px-4 py-2 border border-gray-300 rounded-l-lg focus:ring-2 focus:ring-blue-400 focus:border-blue-400">
+        <button type="submit" 
+                class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-r-lg">
+          Search
+        </button>
+        {% if search_query %}
+        <a href="{% url 'worklog_list' %}" 
+           class="ml-2 bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">
+          Clear
+        </a>
+        {% endif %}
+      </form>
+    </div>
 {% for worklog in logs %}
 <div class="bg-white p-6 rounded-xl shadow-md mb-6 hover:shadow-lg transition duration-300">
   <div class="flex justify-between items-center">
@@ -48,6 +68,7 @@
   <p class="text-center text-gray-500">No work logs available yet.</p>
 {% endfor %}
 
+
 <!-- Pagination Controls -->
 <div class="flex justify-center mt-8">
   <nav class="inline-flex rounded-md shadow">
@@ -55,7 +76,7 @@
       <a href="?page=1" class="px-3 py-2 rounded-l-md border border-gray-300 bg-white text-gray-500 hover:bg-gray-50">
         &laquo; First
       </a>
-      <a href="?page={{ page_obj.previous_page_number }}" class="px-3 py-2 border-t border-b border-gray-300 bg-white text-gray-500 hover:bg-gray-50">
+      <a href="?page={{ page_obj.previous_page_number }}&q={{ search_query|urlencode }}" class="px-3 py-2 border-t border-b border-gray-300 bg-white text-gray-500 hover:bg-gray-50">
         Previous
       </a>
     {% endif %}
