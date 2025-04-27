@@ -1,32 +1,10 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Digital Worklog</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 font-sans leading-normal tracking-normal min-h-screen flex flex-col">
-
-  <!-- Navbar -->
-  <nav class="bg-indigo-600 p-4 shadow-md">
-    <div class="container mx-auto">
-      <h1 class="text-white text-2xl font-semibold">📝 Digital Worklog</h1>
-    </div>
-  </nav>
-
-  <!-- Main Content -->
-  <main class="container mx-auto px-4 py-20 text-center flex-grow">
-    <h2 class="text-4xl font-bold text-gray-800 mb-4">Welcome to Your Digital Worklog</h2>
-    <p class="text-lg text-gray-600 mb-8">Track your tasks, stay productive, and manage your day efficiently.</p>
-    <a href="{% url 'worklog_list' %}" class="bg-indigo-600 text-white px-6 py-3 rounded-full text-lg shadow hover:bg-indigo-700 transition">
-      Get Started
-    </a>
-  </main>
-
-  <!-- Footer -->
-  <footer class="bg-gray-800 text-white text-center py-4">
-    <p class="text-sm">&copy; 2025 Digital Worklog. All rights reserved.</p>
-  </footer>
-
-</body>
-</html>
+{% extends 'log_app/base.html' %}
+{% block content %}
+<main class="container mx-auto px-4 py-20 text-center flex-grow">
+  <h2 class="text-4xl font-bold text-gray-800 mb-4">Welcome to Your Digital Worklog</h2>
+  <p class="text-lg text-gray-600 mb-8">Track your tasks, stay productive...</p>
+  <a href="{% url 'worklog_list' %}" class="bg-indigo-600 text-white px-6 py-3 rounded-full text-lg shadow hover:bg-indigo-700 transition">
+    Get Started
+  </a>
+</main>
+{% endblock %}
