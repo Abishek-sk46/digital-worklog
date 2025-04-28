@@ -31,7 +31,7 @@ from reportlab.lib.units import inch
 from reportlab.lib import colors
 
 # search functinality
-from django.db.models import Q
+from django.db.models import Q, Sum
 
 
 
@@ -46,41 +46,63 @@ def home(request):
 
 def worklog_list(request):
     search_query = request.GET.get('q', '')
-    
+    filter_type = request.GET.get('filter', 'all')  # all/personal/team
+
+    # Base query
     if request.user.is_superuser:
         logs = WorkLog.objects.all()
     else:
-        logs = WorkLog.objects.filter(user=request.user)
-    
+        logs = WorkLog.objects.filter(
+            Q(user=request.user) |
+            Q(team__members=request.user, visibility='TEAM') |
+            Q(visibility='PUBLIC')
+        )
+
+    # Apply filters
+    if filter_type == 'personal':
+        logs = logs.filter(team__isnull=True)  # Only personal logs
+    elif filter_type == 'team':
+        logs = logs.filter(
+            team__isnull=False,  # Only team-associated logs
+            visibility='TEAM',   # Ensure visibility is set to 'TEAM'
+            team__members=request.user  # Ensure the user is a member of the team
+        )
+
+    # Search
     if search_query:
         logs = logs.filter(
             Q(task_list__icontains=search_query) |
             Q(description__icontains=search_query)
         )
-    
-    logs = logs.order_by('-date_logged')
-    paginator = Paginator(logs, 10)  # Show 10 logs per page
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    
-    return render(request, 'log_app/worklog_list.html', {'page_obj': page_obj,'logs':page_obj.object_list,'search_query': request.GET.get('q', '')})
 
-@login_required
+    paginator = Paginator(logs.order_by('-date_logged'), 10)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    
+    return render(request, 'log_app/worklog_list.html', {
+        'page_obj': page_obj,
+        'logs': page_obj.object_list,
+        'search_query': search_query,
+        'current_filter': filter_type
+    })
+
 def add_worklog(request):
     if request.method == 'POST':
         form = WorkLogForm(request.POST)
         if form.is_valid():
             worklog = form.save(commit=False)
-            worklog.user = request.user  # 🔥 Auto-assign user
+            worklog.user = request.user
+            
+            # Handle team assignment
+            team_id = request.POST.get('team')
+            if team_id:
+                worklog.team = Team.objects.get(id=team_id)
+            
             worklog.save()
-            messages.success(request, "Worklog added successfully!")  # Add this line
             return redirect('worklog_list')
-    else:
-        form = WorkLogForm()
     
     return render(request, 'log_app/add_worklog.html', {
-        'form': form,
-        'title': 'Add Work Log'
+        'form': WorkLogForm(),
+        'teams': request.user.teams.all()  # Pass teams to template
     })
 
 
@@ -332,3 +354,61 @@ def export_pdf(request):
     
     buffer.seek(0)
     return HttpResponse(buffer, content_type='application/pdf')
+
+
+#==================================================Team section==========================================================
+from django.contrib import messages
+from .models import Team
+
+@login_required
+def create_team(request):
+    users = User.objects.exclude(id=request.user.id).order_by('username')[:200]  # Limit to 200
+    
+    if request.method == 'POST':
+        team = Team.objects.create(
+            name=request.POST['name'],
+            manager=request.user
+        )
+        selected_ids = request.POST.getlist('members')
+        team.members.add(request.user, *selected_ids)  # Add manager + selected members
+        return redirect('team_dashboard', team.id)
+    
+    return render(request, 'log_app/create_team.html', {
+        'users': users
+    })
+
+@login_required
+def team_dashboard(request, team_id):
+    team = get_object_or_404(Team, id=team_id)
+    if request.user not in team.members.all():
+        raise PermissionDenied
+    
+    logs = WorkLog.objects.filter(team=team).order_by('-date_logged')
+    members = team.members.annotate(
+        total_hours=Sum('worklog__hours_spent')
+    )
+    
+    return render(request, 'log_app/team_dashboard.html', {
+        'team': team,
+        'logs': logs,
+        'members': members
+    })
+
+
+from django.http import JsonResponse
+from django.core.paginator import Paginator
+
+def user_search_api(request):
+    search = request.GET.get('search', '')
+    page = request.GET.get('page', 1)
+    
+    users = User.objects.filter(
+        Q(username__icontains=search) |
+        Q(email__icontains=search)
+    ).values('id', 'username', 'email')[:100]  # Limit for safety
+    
+    paginator = Paginator(users, 20)
+    return JsonResponse({
+        'results': list(paginator.page(page)),
+        'has_next': paginator.page(page).has_next()
+    })

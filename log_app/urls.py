@@ -17,4 +17,9 @@ urlpatterns = [
     path('reset/done/', views.password_reset_complete, name='password_reset_complete'),
     path('export/', views.export_csv, name='export_csv'),
     path('export-pdf/', views.export_pdf, name='export_pdf'),
+
+    # =============================Team========================================
+    path('teams/create/', views.create_team, name='create_team'),
+    path('teams/<int:team_id>/', views.team_dashboard, name='team_dashboard'),
+    path('api/users/', views.user_search_api, name='user_search_api'),
 ]

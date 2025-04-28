@@ -41,6 +41,24 @@
     value="{{ form.hours_spent.value|default_if_none:'' }}"
   >
           </div>
+          <div class="mb-4">
+            <label class="block text-gray-700 font-medium mb-1">Log Type</label>
+            <select name="team" class="w-full px-4 py-2 border rounded-lg">
+              <option value="">Personal Log</option>
+              {% for team in request.user.teams.all %}
+                <option value="{{ team.id }}">Team: {{ team.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          
+          <div class="mb-4">
+            <label class="block text-gray-700 font-medium mb-1">Visibility</label>
+            <select name="visibility" class="w-full px-4 py-2 border rounded-lg">
+              <option value="PRIVATE">Only Me</option>
+              <option value="TEAM">My Team</option>
+              <option value="PUBLIC">Everyone</option>
+            </select>
+          </div>
 
           <div class="text-center">
             <button type="submit" id="submit-btn" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition">

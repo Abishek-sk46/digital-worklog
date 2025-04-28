@@ -28,6 +28,23 @@
   <div class="max-w-4xl mx-auto px-4">
     <h1 class="text-3xl font-bold text-center text-gray-800 mb-8">📝 All Work Logs</h1>
 
+
+<!-- Filter Tabs -->
+<div class="flex mb-6 border-b">
+  <a href="?q={{ search_query }}" 
+     class="px-4 py-2 {% if not current_filter or current_filter == 'all' %}border-b-2 border-blue-500 font-bold{% endif %}">
+    All Logs
+  </a>
+  <a href="?filter=personal&q={{ search_query }}" 
+     class="px-4 py-2 {% if current_filter == 'personal' %}border-b-2 border-blue-500 font-bold{% endif %}">
+    Personal
+  </a>
+  <a href="?filter=team&q={{ search_query }}" 
+     class="px-4 py-2 {% if current_filter == 'team' %}border-b-2 border-blue-500 font-bold{% endif %}">
+    Team Logs
+  </a>
+</div>   
+
  <!-- Search Box -->
 <div class="mb-6">
   <form method="get" class="flex items-center">
