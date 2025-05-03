@@ -24,8 +24,7 @@ SECRET_KEY = 'django-insecure-4lrv&13uj_pf$9a*$y$gh*shoooqtck_8#g(0q&071)y*=^-(h
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
-
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['digital-worklog.onrender.com', 'localhost', '127.0.0.1']
 
 
 # Application definition
