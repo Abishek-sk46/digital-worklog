@@ -29,6 +29,7 @@ from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.units import inch
 from reportlab.lib import colors
+from reportlab.lib.pagesizes import letter
 
 # search functinality
 from django.db.models import Q, Sum
@@ -358,6 +359,7 @@ def export_pdf(request):
 
 #==================================================Team section==========================================================
 from django.contrib import messages
+from django.core.exceptions import PermissionDenied
 from .models import Team
 
 @login_required
